@@ -63,6 +63,13 @@ EOF
 LOCAL_HTML_DIR="/home/kiosk/offline"
 LOCAL_HTML_FILE="$LOCAL_HTML_DIR/index.html"
 
+mkdir -p /etc/opt/chrome/policies/managed
+cat > /etc/opt/chrome/policies/managed/disable_translate.json << EOF
+{
+    "TranslateEnabled": false
+}
+EOF
+
 mkdir -p "$LOCAL_HTML_DIR"
 
 cat > "$LOCAL_HTML_FILE" << HTML_EOF
@@ -121,6 +128,8 @@ do
     --disable-suggestions-service \
     --disable-save-password-bubble \
     --disable-session-crashed-bubble \
+    --disable-popup-blocking \
+    --disable-background-networking \
     --incognito \
     --kiosk "$CHROMIUM_URL"
   sleep 5
