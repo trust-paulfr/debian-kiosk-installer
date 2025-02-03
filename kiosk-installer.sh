@@ -7,6 +7,7 @@ apt-get update
 apt-get install \
 	unclutter \
     xorg \
+    curl \
     chromium \
     openbox \
     lightdm \
