@@ -118,13 +118,6 @@ do
     --disable-session-crashed-bubble \
     --incognito \
     --kiosk "$CHROMIUM_URL"
-
-    if check_connection; then
-        CHROMIUM_URL="$TARGET_URL"
-    else
-        CHROMIUM_URL="file://$LOCAL_HTML_FILE"
-    fi
-
   sleep 5
 done &
 EOF
