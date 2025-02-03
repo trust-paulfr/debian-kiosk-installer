@@ -67,6 +67,42 @@ cat > /home/kiosk/.config/openbox/autostart << EOF
 
 unclutter -idle 0.1 -grab -root &
 
+mkdir -p "$LOCAL_HTML_DIR"
+cat > "$LOCAL_HTML_FILE" << EOF
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pas de connexion Internet</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Pas de connexion Internet</h1>
+    <p>Nous essayons de rétablir la connexion...</p>
+</body>
+</html>
+EOF
+
+# Dossier pour la page locale
+LOCAL_HTML_DIR="/home/kiosk/offline"
+LOCAL_HTML_FILE="$LOCAL_HTML_DIR/index.html"
+TARGET_URL="https://neave.tv/"
+
+# Fonction pour vérifier la connexion Internet
+check_connection() {
+    curl -Is "$TARGET_URL" --max-time 5 | head -n 1 | grep "200 OK" > /dev/null
+}
+
+if check_connection; then
+    CHROMIUM_URL="$TARGET_URL"
+else
+    CHROMIUM_URL="file://$LOCAL_HTML_FILE"
+fi
+
 while :
 do
   xrandr --auto
@@ -80,7 +116,14 @@ do
     --disable-save-password-bubble \
     --disable-session-crashed-bubble \
     --incognito \
-    --kiosk "https://neave.tv/"
+    --kiosk "$CHROMIUM_URL"
+
+    if check_connection; then
+        CHROMIUM_URL="$TARGET_URL"
+    else
+        CHROMIUM_URL="file://$LOCAL_HTML_FILE"
+    fi
+
   sleep 5
 done &
 EOF
