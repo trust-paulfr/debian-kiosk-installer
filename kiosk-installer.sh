@@ -32,6 +32,19 @@ fi
 cat > /etc/X11/xorg.conf << EOF
 Section "ServerFlags"
     Option "DontVTSwitch" "true"
+    Option "AutoAddDevices" "false"
+EndSection
+
+Section "InputClass"
+    Identifier "Disable all keyboard input"
+    MatchIsKeyboard "on"
+    Option "Ignore" "on"
+EndSection
+
+Section "InputClass"
+    Identifier "Disable all pointer input"
+    MatchIsPointer "on"
+    Option "Ignore" "on"
 EndSection
 EOF
 
