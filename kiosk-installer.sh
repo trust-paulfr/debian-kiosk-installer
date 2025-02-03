@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# be new
+# Mise à jour des paquets
 apt-get update
 
-# get software
+# Installation des logiciels
 apt-get install \
-	unclutter \
+    unclutter \
     xorg \
     curl \
     chromium \
@@ -14,22 +14,21 @@ apt-get install \
     locales \
     -y
 
-# dir
+# Création des répertoires
 mkdir -p /home/kiosk/.config/openbox
 
-# create group
+# Création du groupe et de l'utilisateur kiosk
 groupadd kiosk
-
-# create user if not exists
 id -u kiosk &>/dev/null || useradd -m kiosk -g kiosk -s /bin/bash 
 
-# rights
+# Droits sur le répertoire utilisateur
 chown -R kiosk:kiosk /home/kiosk
 
-# remove virtual consoles
+# Suppression des consoles virtuelles
 if [ -e "/etc/X11/xorg.conf" ]; then
   mv /etc/X11/xorg.conf /etc/X11/xorg.conf.backup
 fi
+
 cat > /etc/X11/xorg.conf << EOF
 Section "ServerFlags"
     Option "DontVTSwitch" "true"
@@ -49,27 +48,24 @@ Section "InputClass"
 EndSection
 EOF
 
-# create config
+# Configuration de LightDM
 if [ -e "/etc/lightdm/lightdm.conf" ]; then
   mv /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.backup
 fi
+
 cat > /etc/lightdm/lightdm.conf << EOF
 [Seat:*]
 autologin-user=kiosk
 autologin-session=openbox
 EOF
 
-# create autostart
-if [ -e "/home/kiosk/.config/openbox/autostart" ]; then
-  mv /home/kiosk/.config/openbox/autostart /home/kiosk/.config/openbox/autostart.backup
-fi
-cat > /home/kiosk/.config/openbox/autostart << EOF
-#!/bin/bash
-
-unclutter -idle 0.1 -grab -root &
+# Dossier et fichier HTML local
+LOCAL_HTML_DIR="/home/kiosk/offline"
+LOCAL_HTML_FILE="$LOCAL_HTML_DIR/index.html"
 
 mkdir -p "$LOCAL_HTML_DIR"
-cat > "$LOCAL_HTML_FILE" << EOF
+
+cat > "$LOCAL_HTML_FILE" << HTML_EOF
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -86,23 +82,32 @@ cat > "$LOCAL_HTML_FILE" << EOF
     <p>Nous essayons de rétablir la connexion...</p>
 </body>
 </html>
-EOF
+HTML_EOF
 
-# Dossier pour la page locale
-LOCAL_HTML_DIR="/home/kiosk/offline"
-LOCAL_HTML_FILE="$LOCAL_HTML_DIR/index.html"
+# URL cible
 TARGET_URL="https://neave.tv/"
 
-# Fonction pour vérifier la connexion Internet
+# Fonction de vérification de la connexion
 check_connection() {
-    curl -Is "$TARGET_URL" --max-time 5 | head -n 1 | grep "200 OK" > /dev/null
+    curl -Is "$TARGET_URL" --max-time 5 | grep "HTTP/2\|HTTP/1.1" > /dev/null
 }
 
+# Définition de l'URL à ouvrir
 if check_connection; then
     CHROMIUM_URL="$TARGET_URL"
 else
     CHROMIUM_URL="file://$LOCAL_HTML_FILE"
 fi
+
+# Création du fichier autostart
+if [ -e "/home/kiosk/.config/openbox/autostart" ]; then
+  mv /home/kiosk/.config/openbox/autostart /home/kiosk/.config/openbox/autostart.backup
+fi
+
+cat > /home/kiosk/.config/openbox/autostart << SCRIPT_EOF
+#!/bin/bash
+
+unclutter -idle 0.1 -grab -root &
 
 while :
 do
@@ -120,6 +125,6 @@ do
     --kiosk "$CHROMIUM_URL"
   sleep 5
 done &
-EOF
+SCRIPT_EOF
 
-echo "Done!"
+echo "Installation terminée !"
